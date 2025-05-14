@@ -24,10 +24,10 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 
 )
-from usuarios.views import RegisterView
-from rest_framework.decorators import api_view, permission_classes
+from usuarios.views import RegisterView, UsuarioListView
+#from rest_framework.decorators import api_view, permission_classes
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.permissions import AllowAny
+#from rest_framework.permissions import AllowAny
 
 
 
@@ -45,30 +45,40 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
-@swagger_auto_schema(method='post', tags=["token"])
-@api_view(['POST'])
-def custom_token_obtain_pair(request, *args, **kwargs):
-    return TokenObtainPairView.as_view()(request, *args, **kwargs)
-
-@swagger_auto_schema(method='post', tags=["token"])
-@api_view(['POST'])
-
-def custom_token_refresh(request, *args, **kwargs):
-    return TokenRefreshView.as_view()(request, *args, **kwargs)
+class CustomTokenObtainPairView(TokenObtainPairView):
+    @swagger_auto_schema(
+        tags=["token"],  # Aquí forzamos que el grupo se llame "token"
+        operation_summary="Obtener token JWT",
+        operation_description="Obtiene un par de tokens (access y refresh) para el usuario autenticado.",
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+    
+    
+class CustomTokenRefreshView(TokenRefreshView):
+    @swagger_auto_schema(
+        tags=["token"],
+        operation_summary="Refrescar token JWT",
+        operation_description="Recibe un refresh token y devuelve un nuevo access token.",
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/usuarios/', include('usuarios.urls')),
     path('api/productos/', include('productos.urls')),
     path('api/ventas/', include('ventas.urls')),
+    path ('usuarios/', include('usuarios.urls')),
+
     path('register/', RegisterView.as_view(), name='register'),
+    
 
     # Rutas Swagger y Redoc
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-
-    path('api/token/', custom_token_obtain_pair, name='token_obtain_pair'),
-    path('api/token/refresh/', custom_token_refresh, name='token_refresh'),
-
+    
+    
+    path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
 
 ]

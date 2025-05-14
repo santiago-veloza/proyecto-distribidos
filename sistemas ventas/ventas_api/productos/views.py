@@ -27,6 +27,7 @@ class ProductoViewSet(viewsets.ModelViewSet):
         return Response({
             "mensaje": "¡Producto creado con éxito!",
             "producto": serializer.data
+            
         }, status=status.HTTP_201_CREATED)
         
 
